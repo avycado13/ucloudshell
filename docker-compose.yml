@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3.20  # Use the latest stable version
+    command:
+      - "--api.insecure=true"  # Enable the Traefik dashboard (for development only)
+      - "--providers.docker=true"  # Enable Docker as the provider
+      - "--entrypoints.web.address=:80"  # Expose HTTP on port 80
+      - "--entrypoints.websecure.address=:443"  # Expose HTTPS on port 443
+    ports:
+      - "80:80"  # HTTP
+      - "443:443"  # HTTPS
+      - "8080:8080"  # Traefik dashboard (for development)
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"  # Read-only access to Docker socket
+    restart: unless-stopped
+
+  ucloudshell:
+    build:
+      context: .
+    ports:
+      - "80"  # Internal port exposed by the container
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.http.routers.flask-app.rule=Host(`your-domain.com`)"  # Replace with your domain
+      - "traefik.http.routers.flask-app.entrypoints=web"
+      - "traefik.http.services.flask-app.loadbalancer.server.port=80"  # Gunicorn's exposed port
+    volumes:
+      - "./:/app"  # Mount the app directory for development (optional)
+      - "/var/run/docker.sock:/var/run/docker.sock"  # Access Docker API
+    environment:
+      - FLASK_ENV=production  # Optional: Set Flask environment to production
+    depends_on:
+      - traefik
