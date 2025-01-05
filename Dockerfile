@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+FROM ghcr.io/astral-sh/uv:0.5.14@sha256:1184251dd4cfb8cd5bd924ecd2485cb0e8834541e3f91d6a81e9c4224a7c681e
 
 # Install the project into `/app`
 WORKDIR /app
