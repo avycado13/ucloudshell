@@ -71,6 +71,12 @@ def create():
         # Create container with SSH server and mapped port
         container = client.containers.create("ubuntu", ports={"22/tcp": None})
         container.start()
+        # Wait for the container to be fully initialized
+        container.wait()  # Wait for the container to exit (if it does)
+
+        if container.status != 'running':
+            raise Exception(f"Container {container.id} failed to start.")
+
 
         # Install and configure SSH
         commands = [
