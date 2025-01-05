@@ -1,6 +1,5 @@
 import docker
 from flask import Flask, jsonify, request, render_template
-import click
 import subprocess
 import requests
 from docker.errors import DockerException, NotFound
@@ -65,18 +64,9 @@ def homepage():
     return render_template("index.html")
 
 
-@app.route("/create")
-@app.cli.command("create")
+@app.route("/create", methods=["POST"])
 def create():
-    # Implement later
-    # if request.form.get("gh_username"):
-    #     gh_username = request.form.get("gh_username")
-    #     key_id = request.form.get("key_number")
-    #     keys=requests.get(f"https://api.github.com/users/{gh_username}/keys").json()
-    #     if keys:
-    #         key = keys[key_id]["key"]
-    if request.form.get("ssh_key"):
-        key = request.form.get("ssh_key")
+    key = request.form.get("ssh_key")
     try:
         # Create container with SSH server and mapped port
         container = client.containers.create("ubuntu", ports={"22/tcp": None})
@@ -115,13 +105,9 @@ def create():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route("/delete/<container_id>")
-@app.cli.command("delete")
-@click.argument("container_id")
+@app.route("/delete/<container_id>", methods=["DELETE"])
 def delete(container_id):
     try:
-        if not container_id:
-            container_id = request.form.get("id")
         if not container_id:
             return jsonify(
                 {"status": "error", "message": "No container ID provided"}
@@ -139,13 +125,9 @@ def delete(container_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route("/stop/<container_id>")
-@app.cli.command("stop")
-@click.argument("container_id")
+@app.route("/stop/<container_id>", methods=["POST"])
 def stop(container_id):
     try:
-        if not container_id:
-            container_id = request.form.get("id")
         if not container_id:
             return jsonify(
                 {"status": "error", "message": "No container ID provided"}
@@ -162,13 +144,9 @@ def stop(container_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route("/start/<container_id>")
-@app.cli.command("start")
-@click.argument("container_id")
+@app.route("/start/<container_id>", methods=["POST"])
 def start(container_id):
     try:
-        if not container_id:
-            container_id = request.form.get("id")
         if not container_id:
             return jsonify(
                 {"status": "error", "message": "No container ID provided"}
@@ -185,7 +163,7 @@ def start(container_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route("/setup_wireguard/<container_id>")
+@app.route("/setup_wireguard/<container_id>", methods=["POST"])
 def setup_wireguard(container_id):
     try:
         # Ensure WireGuard container is running
@@ -239,7 +217,7 @@ def setup_wireguard(container_id):
         PersistentKeepalive = 25
         """
 
-        return wg_client_config
+        return jsonify({"status": "success", "config": wg_client_config})
 
     except NotFound:
         return jsonify({"status": "error", "message": "Container not found"}), 404
