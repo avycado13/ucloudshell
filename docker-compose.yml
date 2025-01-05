@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   traefik:
-    image: traefik:v3.20  # Use the latest stable version
+    image: traefik:v3.2  # Use the latest stable version
     command:
       - "--api.insecure=true"  # Enable the Traefik dashboard (for development only)
       - "--providers.docker=true"  # Enable Docker as the provider
