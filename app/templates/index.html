@@ -48,12 +48,14 @@
             <input type="submit" value="Create container" formaction="/create" formmethod="post">
         </form>
         <p>Manage existing container</p>
-        <form>
-            <input type ="text" name="container_id" placeholder="Enter container id">
-            <input type="submit" value="Delete container" formaction="/delete">
-            <input type="submit" value="Stop container" formaction="/stop">
-            <input type="submit" value="Start container" formaction="/start">
-            <input type="submit" value="Setup WireGuard" formaction="/setup_wireguard">
+        <form method="POST">
+            {{ form.csrf_token }}
+            {{ form.container_id }}
+            {{ form.shell_submit }}
+            {{ form.delete_submit }}
+            {{ form.stop_submit }}
+            {{ form.start_submit }}
+            {{ form.wireguard_submit }}
         </form>
     </body>
 </html>

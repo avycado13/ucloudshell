@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "docker>=7.1.0",
     "flask>=3.1.0",
+    "flask-wtf>=1.2.2",
     "gunicorn>=23.0.0",
     "requests>=2.32.3",
 ]
@@ -16,4 +17,5 @@ dev = [
     "ruff>=0.8.5",
     "types-docker>=7.1.0.20241229",
     "types-requests>=2.32.0.20241016",
+    "types-wtforms>=3.2.1.20241221",
 ]
