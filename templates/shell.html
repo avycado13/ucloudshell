@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Shell</title>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10/lib/addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-attach@0.11.0/lib/addon-attach.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
+{{/*  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">  */}}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #terminal {
+            width: 100%;
+            height: 500px;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Docker Shell</h1>
+    <label for="container_id">Container ID:</label>
+    <input type="text" id="container_id" placeholder="Enter container ID">
+    <button id="connect">Connect</button>
+    <div id="terminal"></div>
+    <script>
+        
+        const term = new Terminal();
+        const fitAddon = new FitAddon();
+        terminal.loadAddon(fitAddon);
+        const terminalContainer = document.getElementById('terminal');
+        if (terminalContainer) {
+            terminal.open(terminalContainer);
+            fitAddon.fit();
+        }
+        
+            const socket = new WebSocket(`ws://{{ docker_host }}/containers/{{ container_id }}/attach/ws?stdin=1&stdout=1&stderr=1&stream=1`);
+            const attachAddon = new AttachAddon(socket);
+            // Attach the socket to term
+            term.loadAddon(attachAddon);
+        
+// Resize the terminal if the window is resized
+window.addEventListener('resize', () => {
+    fitAddon.fit();
+});
+    </script>
+</body>
+</html>

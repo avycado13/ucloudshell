@@ -1,10 +1,11 @@
 import docker
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, url_for
 import subprocess
 import requests
 from docker.errors import DockerException, NotFound
 import logging
 import socket
+from config import Config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +19,7 @@ except DockerException as e:
     raise
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
 # Pull Ubuntu image at startup
 try:
@@ -63,6 +65,10 @@ def homepage():
     """Display the homepage with basic information and navigation links."""
     return render_template("index.html")
 
+
+@app.route("/shell/<container_id>")
+def shell(container_id):
+    return render_template("shell.html",container_id=container_id,docker_host=app.config['DOCKER_HOST'])
 
 @app.route("/create", methods=["POST"])
 def create():

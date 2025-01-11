@@ -14,4 +14,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff>=0.8.5",
+    "types-docker>=7.1.0.20241229",
+    "types-requests>=2.32.0.20241016",
 ]

@@ -222,6 +222,31 @@ wheels = [
 ]
 
 [[package]]
+name = "types-docker"
+version = "7.1.0.20241229"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "types-requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/4b/7ca6c1fe916ef4c71f145234902bb4da074e410d9cc0bd72572790c3f06d/types_docker-7.1.0.20241229.tar.gz", hash = "sha256:d968f164bb02f934bc2f178515dd4b3c8b2b4e371a9400ec440247c09c139545", size = 29032 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e4/32/8a1c95566816fef8f7b2407d25981cf0d3ecf2f226ed0ab3a34969994ab7/types_docker-7.1.0.20241229-py3-none-any.whl", hash = "sha256:b760745a6cb0351a19108c0b76e2a43ebc05a686f6c3ec9bc1a991ff9f1cc353", size = 43650 },
+]
+
+[[package]]
+name = "types-requests"
+version = "2.32.0.20241016"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/3c/4f2a430c01a22abd49a583b6b944173e39e7d01b688190a5618bd59a2e22/types-requests-2.32.0.20241016.tar.gz", hash = "sha256:0d9cad2f27515d0e3e3da7134a1b6f28fb97129d86b867f24d9c726452634d95", size = 18065 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/01/485b3026ff90e5190b5e24f1711522e06c79f4a56c8f4b95848ac072e20f/types_requests-2.32.0.20241016-py3-none-any.whl", hash = "sha256:4195d62d6d3e043a4eaaf08ff8a62184584d2e8684e9d2aa178c7915a7da3747", size = 15836 },
+]
+
+[[package]]
 name = "ucloudshell"
 version = "0.1.0"
 source = { virtual = "." }
@@ -235,6 +260,8 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "ruff" },
+    { name = "types-docker" },
+    { name = "types-requests" },
 ]
 
 [package.metadata]
@@ -246,7 +273,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.8.5" }]
+dev = [
+    { name = "ruff", specifier = ">=0.8.5" },
+    { name = "types-docker", specifier = ">=7.1.0.20241229" },
+    { name = "types-requests", specifier = ">=2.32.0.20241016" },
+]
 
 [[package]]
 name = "urllib3"
