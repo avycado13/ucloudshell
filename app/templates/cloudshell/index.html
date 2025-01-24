@@ -42,10 +42,10 @@
     </head>
     <body>
         <h1>Welcome to UCloudShell</h1>
-        <p>Create a new container</p>
-        <form>
+        <form method="POST" action="/create">
+            {{ form.csrf_token }}
             <input type="text" name="ssh_key" placeholder="Enter your ssh public key (optional)" width="10000">    
-            <input type="submit" value="Create container" formaction="/create" formmethod="post">
+            <input type="submit" value="Create container">
         </form>
         <p>Manage existing container</p>
         <form method="POST">

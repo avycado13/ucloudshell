@@ -1,63 +1,104 @@
 from app.cloudshell import bp
-from flask import render_template, request, jsonify, url_for, redirect
+from flask import render_template, request, jsonify, url_for, redirect, current_app
 from app.extensions import client, logger
+from flask_security import (
+    auth_required,
+)
 from docker.errors import NotFound
 import socket
 import subprocess
 from app.cloudshell.forms import ContainerForm
 from app.cloudshell.helpers import ensure_wireguard_container
 
-@bp.route("/")
+
+@auth_required
+@bp.route("/", methods=["GET", "POST"])
 def homepage():
     """Display the homepage with basic information and navigation links."""
     form = ContainerForm()
     if form.validate_on_submit():
         if form.shell_submit.data:
-            return redirect(url_for('shell', container_id=form.container_id.data))
+            return redirect(
+                url_for("cloudshell.shell", container_id=form.container_id.data)
+            )
         elif form.delete_submit.data:
-            return redirect(url_for('delete', container_id=form.container_id.data))
+            return redirect(
+                url_for("cloudshell.delete", container_id=form.container_id.data)
+            )
         elif form.stop_submit.data:
-            return redirect(url_for('stop', container_id=form.container_id.data))
+            return redirect(
+                url_for("cloudshell.stop", container_id=form.container_id.data)
+            )
         elif form.start_submit.data:
-            return redirect(url_for('start', container_id=form.container_id.data))
+            return redirect(
+                url_for("cloudshell.start", container_id=form.container_id.data)
+            )
         elif form.wireguard_submit.data:
-            return redirect(url_for('setup_wireguard', container_id=form.container_id.data))
-    return render_template('index.html', form=form)
+            return redirect(
+                url_for(
+                    "cloudshell.setup_wireguard", container_id=form.container_id.data
+                )
+            )
+    return render_template("cloudshell/index.html", form=form)
 
 
 @bp.route("/shell/<container_id>")
 def shell(container_id):
-    return render_template("shell.html",container_id=container_id,docker_host=bp.config['DOCKER_HOST'])
+    return render_template(
+        "cloudshell/shell.html",
+        container_id=container_id,
+        docker_host=current_app.config["DOCKER_HOST"],
+    )
+
 
 @bp.route("/create", methods=["POST"])
 def create():
     key = request.form.get("ssh_key")
     try:
         # Create container with SSH server and mapped port
-        container = client.containers.create("ubuntu", ports={"22/tcp": None})
+        container = client.containers.create(
+            "ubuntu",
+            ports={"22/tcp": None},
+            command="/bin/bash -c 'tail -f /dev/null'",  # Keep container running
+            detach=True,
+        )
         container.start()
-        # Wait for the container to be fully initialized
-        container.wait()  # Wait for the container to exit (if it does)
 
-        if container.status != 'running':
+        # Give container time to initialize
+        import time
+
+        time.sleep(2)
+
+        if container.status != "running":
             raise Exception(f"Container {container.id} failed to start.")
-
 
         # Install and configure SSH
         commands = [
             "apt-get update",
             "apt-get install -y openssh-server sudo",
+            "mkdir -p /root/.ssh",  # Ensure .ssh directory exists
             "ssh-keygen -A",
             f'echo "root:{container.id}" | chpasswd',
             "service ssh start",
         ]
+
         if key:
-            commands.append(f'echo "{key}" >> /root/.ssh/authorized_keys')
+            commands.extend(
+                [
+                    "chmod 700 /root/.ssh",
+                    f'echo "{key}" > /root/.ssh/authorized_keys',
+                    "chmod 600 /root/.ssh/authorized_keys",
+                ]
+            )
 
         for cmd in commands:
-            result = container.exec_run(cmd)
+            result = container.exec_run(
+                cmd, environment={"DEBIAN_FRONTEND": "noninteractive"}
+            )
             if result.exit_code != 0:
-                raise Exception(f"Command failed: {cmd}")
+                raise Exception(
+                    f"Command failed: {cmd} with error: {result.output.decode()}"
+                )
 
         port = container.attrs["NetworkSettings"]["Ports"]["22/tcp"][0]["HostPort"]
 

@@ -1,5 +1,6 @@
 from app.extensions import logger, client
 
+
 def ensure_wireguard_container():
     """Ensure the WireGuard container is running."""
     try:
