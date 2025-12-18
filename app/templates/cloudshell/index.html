@@ -1,61 +1,27 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>UCloudShell</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            h1 {
-                color: #333;
-                text-align: center;
-            }
-            form {
-                margin: 20px 0;
-                padding: 20px;
-                background: #f5f5f5;
-                border-radius: 5px;
-            }
-            input[type="text"] {
-                width: 100%;
-                padding: 8px;
-                margin: 8px 0;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-            }
-            input[type="submit"] {
-                background: #4CAF50;
-                color: white;
-                padding: 10px 15px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                margin: 4px;
-            }
-            input[type="submit"]:hover {
-                background: #45a049;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Welcome to UCloudShell</h1>
-        <form method="POST" action="/create">
-            {{ form.csrf_token }}
-            <input type="text" name="ssh_key" placeholder="Enter your ssh public key (optional)" width="10000">    
-            <input type="submit" value="Create container">
-        </form>
-        <p>Manage existing container</p>
-        <form method="POST">
-            {{ form.csrf_token }}
-            {{ form.container_id }}
-            {{ form.shell_submit }}
-            {{ form.delete_submit }}
-            {{ form.stop_submit }}
-            {{ form.start_submit }}
-            {{ form.wireguard_submit }}
-        </form>
-    </body>
-</html>
+{% extends "base.html" %}
+{% import "bootstrap_wtf.html" as wtf %}
+
+{% block title %}{{_("Home - UCloudShell")}}{% endblock %}
+
+{% block content %}
+        <h1 class="text-center mb-4">{{_("Welcome to UCloudShell")}}</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <form hx-post="/create" hx-swap="outerHTML">
+                    {{ form.csrf_token }}
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="ssh_key" placeholder="Enter your ssh public key (optional)">
+                    </div>
+                    <button type="submit" class="btn btn-primary">{{_("Create container")}}</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{_("Manage existing container")}}</h5>
+                {{ wtf.quick_form(form) }}
+            </div>
+        </div>
+{% endblock %}

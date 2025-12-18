@@ -1,19 +1,21 @@
-from app.cloudshell import bp
+from app.cloudshell import bp, api
 from flask import render_template, request, jsonify, url_for, redirect, current_app
 from app.extensions import client, logger
 from flask_security import (
     auth_required,
+    http_auth_required,
+    auth_token_required,
 )
 from docker.errors import NotFound
 import socket
 import subprocess
 from app.cloudshell.forms import ContainerForm
-from app.cloudshell.helpers import ensure_wireguard_container
+from app.cloudshell.helpers import ensure_wireguard_container, create
 
 
-@auth_required
 @bp.route("/", methods=["GET", "POST"])
-def homepage():
+@auth_required
+def index():
     """Display the homepage with basic information and navigation links."""
     form = ContainerForm()
     if form.validate_on_submit():
@@ -42,7 +44,8 @@ def homepage():
     return render_template("cloudshell/index.html", form=form)
 
 
-@bp.route("/shell/<container_id>")
+@bp.route("/shell/<int:container_id>")
+@auth_required
 def shell(container_id):
     return render_template(
         "cloudshell/shell.html",
@@ -51,93 +54,16 @@ def shell(container_id):
     )
 
 
+@auth_required
 @bp.route("/create", methods=["POST"])
 def create():
-    key = request.form.get("ssh_key")
-    try:
-        # Create container with SSH server and mapped port
-        container = client.containers.create(
-            "ubuntu",
-            ports={"22/tcp": None},
-            command="/bin/bash -c 'tail -f /dev/null'",  # Keep container running
-            detach=True,
-        )
-        container.start()
-
-        # Give container time to initialize
-        import time
-
-        time.sleep(2)
-
-        if container.status != "running":
-            raise Exception(f"Container {container.id} failed to start.")
-
-        # Install and configure SSH
-        commands = [
-            "apt-get update",
-            "apt-get install -y openssh-server sudo",
-            "mkdir -p /root/.ssh",  # Ensure .ssh directory exists
-            "ssh-keygen -A",
-            f'echo "root:{container.id}" | chpasswd',
-            "service ssh start",
-        ]
-
-        if key:
-            commands.extend(
-                [
-                    "chmod 700 /root/.ssh",
-                    f'echo "{key}" > /root/.ssh/authorized_keys',
-                    "chmod 600 /root/.ssh/authorized_keys",
-                ]
-            )
-
-        for cmd in commands:
-            result = container.exec_run(
-                cmd, environment={"DEBIAN_FRONTEND": "noninteractive"}
-            )
-            if result.exit_code != 0:
-                raise Exception(
-                    f"Command failed: {cmd} with error: {result.output.decode()}"
-                )
-
-        port = container.attrs["NetworkSettings"]["Ports"]["22/tcp"][0]["HostPort"]
-
-        return jsonify(
-            {
-                "status": "success",
-                "port": port,
-                "container_id": container.id,
-                "user": "root",
-                "password": container.id,
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Error creating container: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-@bp.route("/delete/<container_id>", methods=["DELETE"])
-def delete(container_id):
-    try:
-        if not container_id:
-            return jsonify(
-                {"status": "error", "message": "No container ID provided"}
-            ), 400
-
-        container = client.containers.get(container_id)
-        container.stop()
-        container.remove()
-        return jsonify({"status": "success", "message": "Container deleted"})
-
-    except NotFound:
-        return jsonify({"status": "error", "message": "Container not found"}), 404
-    except Exception as e:
-        logger.error(f"Error deleting container: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+    job = create()
+    container_info = job
+    return container_info
 
 
 @bp.route("/stop/<container_id>", methods=["POST"])
+@auth_required
 def stop(container_id):
     try:
         if not container_id:
@@ -157,6 +83,7 @@ def stop(container_id):
 
 
 @bp.route("/start/<container_id>", methods=["POST"])
+@auth_required
 def start(container_id):
     try:
         if not container_id:
@@ -175,7 +102,8 @@ def start(container_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@bp.route("/setup_wireguard/<container_id>", methods=["POST"])
+@auth_required
+@bp.route("/setup_wireguard/<string:container_id>", methods=["POST"])
 def setup_wireguard(container_id):
     try:
         # Ensure WireGuard container is running
